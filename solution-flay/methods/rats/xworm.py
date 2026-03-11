@@ -5,10 +5,6 @@ XWorm is a C# .NET Remote Access Trojan (RAT) that communicates with a C2
 server over TCP. Config values (Host, Port, KEY, SPL, Mutex, Group) are
 AES-encrypted with Rijndael-256 and stored in the .NET #US heap — full
 decryption requires the builder's hardcoded key which varies per build.
-
-This module provides detection only: is_xworm() returns True if the binary
-is an XWorm (or XClient) payload, allowing flay.py to identify and flag it
-without attempting C2 extraction.
 """
 
 
@@ -54,5 +50,6 @@ def is_xworm(data: bytes) -> bool:
     for fp in _FINGERPRINTS_UTF16:
         if fp in data:
             score += 1
+
 
     return score >= 3
