@@ -14,34 +14,6 @@ diverged significantly. Key additions over vanilla AsyncRAT include:
 Because it inherits AsyncRAT's codebase it will score positively on the
 AsyncRAT detector as well. VenomRAT MUST be checked first in the dispatcher
 so it is not misclassified as AsyncRAT.
-
-All string literals are UTF-16LE (standard .NET C# string heap).
-
-Fingerprint tiers:
-
-  HIGH CONFIDENCE (score +3 each) — unique to VenomRAT source, not in AsyncRAT:
-    "VenomRATByVenom"              — hardcoded author/build tag, every build
-    "HVNC_REPLY_MESSAGE"           — HVNC module reply opcode constant
-    "HVNC_REPLY_CMP"               — HVNC module compressed-reply opcode
-    "DataLogs_keylog_offline.txt"  — offline keylogger log filename
-    "OfflineKeylog sending...."    — offline keylogger status string
-
-  MEDIUM CONFIDENCE (score +2 each) — strongly associated, not in AsyncRAT:
-    "HVNCStop"                     — HVNC stop command opcode
-    "DataLogs.conf"                — VenomRAT local config/log filename
-    "OfflineKeylogger"             — offline keylogger class/module name
-    "DataLogs_keylog_online.txt"   — online keylogger log filename
-    "keylogsetting"                — keylogger settings command opcode
-
-  LOW CONFIDENCE (score +1 each) — present in Venom, may appear in other forks:
-    "plu_gin"                      — underscore-obfuscated plugin opcode
-    "save_Plugin"                  — plugin persistence opcode
-    "loadofflinelog"               — offline log upload command
-    "filterinfo"                   — process filter info opcode
-    "runningapp"                   — running applications opcode
-    "Windowssec.exe"               — default dropped executable name
-
-Detection threshold: score >= 5
 """
 
 # ---------------------------------------------------------------------------
@@ -107,5 +79,6 @@ def is_venomrat(data: bytes) -> bool:
     for fp in _LOW:
         if fp in data:
             score += 1
+
 
     return score >= _THRESHOLD
