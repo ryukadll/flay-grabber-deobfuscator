@@ -5,26 +5,6 @@ Doenerium is a JavaScript info-stealer built with Electron. The builder
 packages the JS source into an app.asar archive which is either:
   - Embedded inside the output .exe (single-file Electron build)
   - Stored as resources/app.asar alongside the .exe
-
-The webhook is set in config.js as the value of the 'webhook' key.
-When built with 'dynamic encryption' (javascript-obfuscator), the strings
-are hex-escaped (\\xNN) or unicode-escaped (\\uNNNN) but never truly
-encrypted — they are still recoverable by decoding the escape sequences.
-
-Detection fingerprints:
-    b'doenerium'           — literal name embedded in package.json / JS
-    b'electron'            — runtime identifier in the PE resources
-    ASAR magic (\\x04\\x00\\x00\\x00) + JSON header containing {"files":
-
-Extraction order:
-    1. If input is a .exe  — scan binary for embedded ASAR magic
-    2. If input is a dir   — look for resources/app.asar
-    3. If input is a .asar — parse directly
-    4. Walk all JS files in the ASAR; search for webhook via:
-         a. Plain regex
-         b. Hex-escape decode then regex
-         c. Unicode-escape decode then regex
-         d. Base64-candidate decode then regex
 """
 
 import os
@@ -33,17 +13,16 @@ import json
 import struct
 import base64
 
-# -- Detection fingerprints ---------------------------------------------------
+# -- Detection fingerprints 
 _FINGERPRINTS = [
     b"doenerium",
     b"Doenerium",
-    b"REPLACE_ME",          # unbuilt placeholder in config.js
+    b"REPLACE_ME",          
 ]
 
 # ASAR header magic: first 4 bytes of every ASAR file
 _ASAR_MAGIC = b"\x04\x00\x00\x00"
 
-# -- Regex --------------------------------------------------------------------
 _WEBHOOK_RE = re.compile(
     r"https://discord(?:app)?\.com/api/webhooks/[0-9]{17,20}/[a-zA-Z0-9_\-]{60,100}"
 )
@@ -84,7 +63,7 @@ def _search_js(content: str) -> str | None:
     return None
 
 
-# -- ASAR parser --------------------------------------------------------------
+# -- ASAR parser 
 
 def _parse_asar(data: bytes, base_offset: int = 0) -> dict:
     """
@@ -137,10 +116,6 @@ def _parse_asar(data: bytes, base_offset: int = 0) -> dict:
 
 
 def _find_asar_offset(data: bytes) -> int | None:
-    """
-    Scan a binary for an embedded ASAR archive.
-    Returns the byte offset of the ASAR header, or None if not found.
-    """
     pos = 0
     while pos < len(data) - 16:
         idx = data.find(_ASAR_MAGIC, pos)
@@ -220,11 +195,6 @@ def extract_webhook(data: bytes) -> str | None:
 
 
 class DoeneriumDeobf:
-    """
-    Handles Doenerium — an Electron-based JavaScript stealer.
-    Accepts: built .exe, resources/app.asar file, or .asar file directly.
-    """
-
     def __init__(self, filepath: str, entries: list = None):
         self.filepath = filepath
         self.entries = entries or []
