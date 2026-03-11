@@ -16,7 +16,7 @@ A static analysis tool for identifying and extracting C2 configuration from comm
 
 ## Features
 
-- Identifies malware family from the binary alone — no execution required
+- Identifies malware family from the binary alone, no execution required
 - Extracts Discord webhooks, Discord bot tokens, and Telegram bot tokens where the format allows static recovery
 - Validates extracted credentials live (checks if webhook/token is still active)
 - Supports downloading samples directly via URL (`-d` prefix)
