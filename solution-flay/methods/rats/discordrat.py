@@ -15,10 +15,6 @@ Webhook / token extraction logic is unchanged.
 import re
 import struct
 
-# ---------------------------------------------------------------------------
-# Strong detection fingerprints (very specific to Discord-RAT)
-# ---------------------------------------------------------------------------
-
 _STRONG_ASCII = [
     b"CreateHostingChannel",
     b"session_channel_holder",
@@ -28,10 +24,6 @@ _STRONG_UTF16 = [s.encode("utf-16-le") for s in [
     "wss://gateway.discord.gg/?v=9&encording=json",  # unique typo
     "@here :white_check_mark: New session opened",
 ]]
-
-# ---------------------------------------------------------------------------
-# Moderate fingerprints
-# ---------------------------------------------------------------------------
 
 _FINGERPRINTS_ASCII = [
     b"Discord_rat.Program",
@@ -46,20 +38,11 @@ _FINGERPRINTS_UTF16 = [s.encode("utf-16-le") for s in [
     "session-",
 ]]
 
-# ---------------------------------------------------------------------------
-# Config extraction — regex patterns applied to decoded #US strings
-# ---------------------------------------------------------------------------
-
 _TOKEN_RE = re.compile(
     r'^[A-Za-z0-9_-]{24,28}\.[A-Za-z0-9_-]{6}\.[A-Za-z0-9_-]{27,}$'
 )
 
 _SNOWFLAKE_RE = re.compile(r'^\d{17,20}$')
-
-
-# ---------------------------------------------------------------------------
-# .NET #US heap parser (shared utility)
-# ---------------------------------------------------------------------------
 
 def _get_streams(data: bytes) -> dict:
     bsjb = data.find(b"BSJB")
@@ -86,7 +69,6 @@ def _get_streams(data: bytes) -> dict:
 
 
 def _get_us_strings(data: bytes) -> list:
-    """Parse the .NET #US (user strings) heap and return decoded strings."""
     streams = _get_streams(data)
     if "#US" not in streams:
         return []
@@ -125,22 +107,7 @@ def _get_us_strings(data: bytes) -> list:
             pass
     return entries
 
-
-# ---------------------------------------------------------------------------
-# Public API
-# ---------------------------------------------------------------------------
-
 def is_discordrat(data: bytes) -> bool:
-    """
-    Return True if the binary is likely Discord-RAT.
-
-    Scoring model:
-        +3 strong indicators
-        +1 normal indicators
-
-    Detection threshold: score >= 3
-    """
-
     if b"BSJB" not in data:
         return False
 
@@ -179,5 +146,6 @@ def extract_config(data: bytes) -> dict:
             config["guild_id"] = s
         if config["bot_token"] and config["guild_id"]:
             break
+
 
     return config
