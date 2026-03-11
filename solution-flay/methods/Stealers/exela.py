@@ -1,15 +1,3 @@
-"""
-Exela v2 stealer deobfuscator.
-
-The Exela obfuscator wraps the payload in up to N layers of AES-GCM encryption.
-Each compiled layer has:
-  co_names:  (..., 'encrypted_data', 'exec', 'DecryptString')
-  co_consts: [key_b64, tag_b64, nonce_b64, encrypted_data_b64, None]
-
-The default config runs Main() 3 times so there are typically 3 layers,
-but we peel up to MAX_LAYERS to be safe.
-"""
-
 import re
 import os
 import base64
@@ -45,25 +33,12 @@ def _is_exela_code(code_obj) -> bool:
     # Classic nested variant: both names present
     if "DecryptString" in names and "encrypted_data" in names:
         return True
-    # Module-level variant: DecryptString defined as a function in co_names,
-    # exec called at module level, and b64 params stored in co_consts
     if "DecryptString" in names and "exec" in names:
         return _extract_params_from_code(code_obj) is not None
     return False
 
 
 def _extract_params_from_code(code_obj):
-    """
-    Extract (key, tag, nonce, encrypted_data) as bytes from a code object's
-    co_consts.
-
-    Exela variants differ in where they place the 4 base64 params:
-      - Classic nested stub:  consts[0:4]
-      - Module-level variant: the last 4 b64-decodable strings in co_consts
-
-    We scan all consts for 4 consecutive base64-decodable strings and return
-    the last such group found (most likely to be key/tag/nonce/ct).
-    """
     consts = code_obj.co_consts
     if len(consts) < 4:
         return None
@@ -76,8 +51,6 @@ def _extract_params_from_code(code_obj):
             return True
         except Exception:
             return False
-
-    # Collect all consecutive runs of 4+ b64 strings
     best = None
     run_start = None
     run_len = 0
@@ -87,10 +60,7 @@ def _extract_params_from_code(code_obj):
                 run_start = i
             run_len += 1
             if run_len >= 4:
-                # Take this group of 4 starting at the first in the run
                 best = (run_start, run_start + 1, run_start + 2, run_start + 3)
-                # Keep scanning — prefer the LAST group (module-level variant
-                # puts params at the end of a very long const list)
                 best = (i - 3, i - 2, i - 1, i)
         else:
             run_start = None
@@ -122,7 +92,6 @@ def _extract_params_from_code(code_obj):
 
 
 def _extract_params_from_source(text: str):
-    """Fallback: extract params via regex from decompiled source."""
     km = _KEY_RE.search(text)
     tm = _TAG_RE.search(text)
     nm = _NONCE_RE.search(text)
@@ -151,10 +120,6 @@ def _decrypt_layer(key: bytes, nonce: bytes, tag: bytes, ct: bytes):
 
 
 def _find_exela_code_obj(root_code):
-    """
-    Return the first code object (root or nested) that passes _is_exela_code.
-    Checks root first so the module-level variant is caught immediately.
-    """
     import types as _types
     if _is_exela_code(root_code):
         return root_code
@@ -167,10 +132,6 @@ def _find_exela_code_obj(root_code):
 
 
 def _peel_code_layers(code_obj):
-    """
-    Recursively peel AES-GCM layers starting from a code object.
-    Returns the final plaintext string or None.
-    """
     target = _find_exela_code_obj(code_obj)
     if target is None:
         return None
@@ -207,10 +168,6 @@ def _peel_code_layers(code_obj):
 
 
 def _peel_source_layers(text: str):
-    """
-    Peel layers from decompiled source text using regex extraction.
-    Returns the final plaintext string or None.
-    """
     for _ in range(MAX_LAYERS):
         params = _extract_params_from_source(text)
         if params is None:
@@ -232,10 +189,6 @@ class ExelaDeobf:
         self.tempdir = os.path.join(directory, "..", "..", "temp")
 
     def _load_and_peel(self, filepath: str):
-        """
-        Load a .pyc file, detect Exela via co_names, peel all AES-GCM layers,
-        and return the webhook/token if found.
-        """
         if not _CRYPTO_AVAILABLE:
             raise Exception("cryptography package not installed")
 
@@ -275,7 +228,7 @@ class ExelaDeobf:
         if not _CRYPTO_AVAILABLE:
             raise Exception("cryptography package not installed — cannot decrypt Exela payload")
 
-        # ── pass 1: co_names detection + co_consts extraction per .pyc ────────
+        # ── pass 1: co_names detection + co_consts extraction per .pyc 
         for root, _, files in os.walk(self.extractiondir):
             for fname in files:
                 if not fname.endswith(".pyc"):
@@ -288,7 +241,7 @@ class ExelaDeobf:
                 except Exception:
                     pass
 
-        # ── pass 2: source-regex fallback (for decompiled .py files) ──────────
+        # ── pass 2: source-regex fallback (for decompiled .py files)
         for root, _, files in os.walk(self.extractiondir):
             for fname in files:
                 if not fname.endswith(".py"):
