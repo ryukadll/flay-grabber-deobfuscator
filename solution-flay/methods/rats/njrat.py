@@ -4,37 +4,6 @@ NjRAT / Bladabindi detector
 NjRAT (also known as Bladabindi) is a VB.NET RAT originally created around
 2012-2013. It remains one of the most widely distributed RATs globally due
 to its simplicity and many publicly available builders.
-
-Detection uses a scoring system (like XWorm) to avoid false positives,
-since several individual fingerprints are too short or common on their own.
-
-Fingerprint tiers:
-
-  HIGH CONFIDENCE (score +3 each) — unique to NjRAT protocol:
-    "|'|'|" UTF-16LE  — the NjRAT C2 packet field separator, appears in
-                        every single build without exception
-    "[endof]" UTF-16LE — NjRAT protocol end-of-message marker
-
-  MEDIUM CONFIDENCE (score +2 each) — strongly associated, rarely elsewhere:
-    "Fransesco" ASCII  — embedded author name in Fransesco variant (majority)
-    "CsAntiProcess" ASCII — anti-analysis class, unique to NjRAT source
-    "LORDDecrypt" ASCII   — decryption function name from NjRAT source
-    "SoftwareMicrosoftWindowsCurrentVersionRun" UTF-16LE  — persistence key
-                           stored as a single concatenated string, unique to NjRAT
-    "SGFjS2Vk" UTF-16LE   — base64("HacKed"), hardcoded default mutex in NjRAT
-    b"Microsoft.VisualBasic.MyServices" ASCII — VB.NET runtime namespace;
-                           combined with other hits confirms VB.NET origin
-
-  LOW CONFIDENCE (score +1 each) — present in NjRAT, also possible elsewhere:
-    "fransesco" UTF-16LE  — lowercase variant author string
-    "ctraik" UTF-16LE     — NjRAT internal command token
-    "vn" UTF-16LE         — version/info opcode
-    "rss" UTF-16LE        — remote shell opcode
-    "kl" UTF-16LE         — keylogger opcode
-    b"Stub.exe" ASCII     — default output filename in NjRAT builders
-    b"LORDDecrypt" ASCII  — already counted above
-
-Detection threshold: score >= 4
 """
 
 import struct
@@ -117,5 +86,6 @@ def is_njrat(data: bytes) -> bool:
     for fp in _LOW_UTF16:
         if fp in data:
             score += 1
+
 
     return score >= _THRESHOLD
