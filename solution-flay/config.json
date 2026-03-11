@@ -1,0 +1,24 @@
+{
+    "deletemessage": {
+        "content": "@everyone",
+        "embeds": [
+            {
+                "title": "flay",
+                "description": "webhook nuked by flay deobfuscator.",
+                "color": 5793266
+            }
+        ]
+    },
+    "spammessage": {
+        "content": "@everyone",
+        "embeds": [
+            {
+                "title": "flay",
+                "description": "webhook nuked by flay deobfuscator.",
+                "color": 5793266
+            }
+        ]
+    },
+    "deleteafterdeobf": true,
+    "telegram_message": "flay"
+}
