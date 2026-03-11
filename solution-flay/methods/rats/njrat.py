@@ -8,54 +8,43 @@ to its simplicity and many publicly available builders.
 
 import struct
 
-# ---------------------------------------------------------------------------
-# Fingerprints
-# ---------------------------------------------------------------------------
 
 # Score +3: unique NjRAT protocol markers
 _HIGH = [
-    "|'|'|".encode("utf-16-le"),   # field separator in ALL NjRAT builds
-    "[endof]".encode("utf-16-le"), # end-of-message marker
+    "|'|'|".encode("utf-16-le"),   
+    "[endof]".encode("utf-16-le"), 
 ]
 
 # Score +2: strongly NjRAT-specific
 _MEDIUM_ASCII = [
-    b"Fransesco",            # author name, present in majority of builds
-    b"CsAntiProcess",        # anti-analysis class unique to NjRAT source
-    b"LORDDecrypt",          # decryption function in NjRAT source
+    b"Fransesco",            
+    b"CsAntiProcess",        
+    b"LORDDecrypt",          
 ]
 _MEDIUM_UTF16 = [s.encode("utf-16-le") for s in [
-    "SoftwareMicrosoftWindowsCurrentVersionRun",  # concatenated run key (NjRAT-specific)
-    "SGFjS2Vk",              # base64("HacKed") — default mutex in all builders
-    "EnviarPermisaoGerenciador",  # Portuguese method name unique to NjRAT source
+    "SoftwareMicrosoftWindowsCurrentVersionRun",  
+    "SGFjS2Vk",              
+    "EnviarPermisaoGerenciador",  
 ]]
 
 # Score +1: present in NjRAT, not unique enough alone
 _LOW_ASCII = [
-    b"Stub.exe",             # default output name in NjRAT builders
+    b"Stub.exe",             
 ]
 _LOW_UTF16 = [s.encode("utf-16-le") for s in [
-    "fransesco",             # lowercase variant author string
-    "ctraik",                # internal command token
-    "rss",                   # remote shell opcode
-    "kl",                    # keylogger opcode
-    "vn",                    # version/info opcode
-    "[k]",                   # keylog marker
-    "[i]",                   # info marker
+    "fransesco",            
+    "ctraik",             
+    "rss",               
+    "kl",                    
+    "vn",                    
+    "[k]",                  
+    "[i]",               
 ]]
 
 _THRESHOLD = 4
 
 
 def is_njrat(data: bytes) -> bool:
-    """
-    Return True if the binary scores >= 4 across NjRAT fingerprint tiers.
-
-    Requires BSJB (.NET) header to be present as a fast pre-filter.
-    High-confidence markers contribute 3 points each; medium 2; low 1.
-    A single |'|'| separator (score 3) plus one medium hit (score 2)
-    is sufficient. Two high hits alone (score 6) are also sufficient.
-    """
     if b"BSJB" not in data:
         return False
 
@@ -89,3 +78,4 @@ def is_njrat(data: bytes) -> bool:
 
 
     return score >= _THRESHOLD
+
