@@ -97,13 +97,6 @@ def _score(data: bytes, highs: list, mediums: list, lows: list) -> int:
 
 
 def is_redline(data: bytes) -> bool:
-    """
-    Return True if the binary is a RedLine client or panel binary.
-
-    Requires BSJB (.NET) header as a fast pre-filter. Checks client
-    fingerprints first, then panel fingerprints. Either path reaching
-    score >= 5 triggers detection.
-    """
     if b"BSJB" not in data:
         return False
 
@@ -125,3 +118,4 @@ def is_redline(data: bytes) -> bool:
         _PANEL_LOW_UTF16,
     )
     return panel_score >= _THRESHOLD
+
