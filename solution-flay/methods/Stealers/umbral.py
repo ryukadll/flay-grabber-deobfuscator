@@ -4,19 +4,6 @@ Umbral Stealer deobfuscator — https://github.com/Blank-c/Umbral-Stealer
 Umbral is a C# .NET stealer (not Python/PyInstaller). The builder patches
 the webhook URL into the compiled payload.exe before delivery using AES-GCM
 encryption via Windows BCrypt API.
-
-How the webhook is stored in a built binary:
-  - The builder writes three consecutive base64-encoded UTF-16LE entries into
-    the .NET #US (user strings) heap at a fixed index:
-      [i]   AES-256 key  — 32 bytes (b64len 44)
-      [i+1] AES-GCM nonce — 12 bytes (b64len 16)
-      [i+2] ciphertext blob — plaintext + 16-byte GCM tag appended
-  - AESGCM(key).decrypt(nonce, blob, None) recovers the plaintext webhook URL.
-
-Detection fingerprints (present in ALL Umbral binaries):
-    b'Umbral.payload'  — C# namespace in .NET #Strings metadata heap
-    b'Umbral Stealer'  — assembly title string
-    b'.ligma'          — unique temp archive extension used by the stealer
 """
 
 import re
