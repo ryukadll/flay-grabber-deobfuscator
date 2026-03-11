@@ -1,34 +1,10 @@
 """
 StormKitty deobfuscator — https://github.com/LimerBoy/StormKitty
 
-StormKitty is a C# .NET stealer that exfiltrates via Telegram (not Discord).
+StormKitty is a C# .NET stealer that exfiltrates via Telegram.
 The builder patches two config values into the compiled binary:
   - TelegramAPI  : Telegram bot token  e.g. "1234567890:ABCDEFGHIJKLMNOpqrstu_vwxyz1234567"
   - TelegramID   : Telegram chat ID    e.g. "-1001234567890"
-
-Storage variants:
-
-  1. Plain (unobfuscated build):
-       Stored as UTF-16LE string literals in the .NET #US heap.
-       Directly matched by regex scan of the raw binary.
-
-  2. CRYPTED (obfuscated builder):
-       Each value is AES-256-CBC encrypted and stored as:
-           "CRYPTED" + base64(ciphertext)
-       The key and IV are derived from a hardcoded password + salt via
-       PBKDF2-HMAC-SHA1 (1000 iterations, 48 bytes output):
-           password : b"https://github.com/LimerBoy/StormKitty"
-           salt     : bytes([255,64,191,111,23,3,113,119,231,121,252,112,79,32,114,156])
-           key      : derived[0:32]
-           IV       : derived[32:48]
-       This key/salt are hardcoded in every StormKitty build, making
-       decryption fully static (no per-sample key material needed).
-
-Detection fingerprints (any one is sufficient):
-    b'StormKitty'
-    b'LimerBoy'
-    b'TelegramAPI'
-    b'github.com/LimerBoy/StormKitty'
 """
 
 import os
@@ -36,7 +12,7 @@ import re
 import base64
 import struct
 
-# -- Detection fingerprints ---------------------------------------------------
+# -- Detection fingerprints 
 _FINGERPRINTS = [
     b"StormKitty",
     b"LimerBoy",
@@ -44,12 +20,12 @@ _FINGERPRINTS = [
     b"github.com/LimerBoy/StormKitty",
 ]
 
-# -- Hardcoded AES key derivation parameters ----------------------------------
+# -- Hardcoded AES key derivation parameters 
 _PBKDF2_PASSWORD = b"https://github.com/LimerBoy/StormKitty"
 _PBKDF2_SALT     = bytes([255, 64, 191, 111, 23, 3, 113, 119,
                           231, 121, 252, 112, 79, 32, 114, 156])
 _PBKDF2_ITERS    = 1000
-_PBKDF2_LEN      = 48    # 32 key + 16 IV
+_PBKDF2_LEN      = 48    
 
 # Lazy-derived — computed once on first use
 _AES_KEY: bytes | None = None
@@ -77,7 +53,6 @@ def _get_aes_params() -> tuple[bytes, bytes]:
 
 
 def _decrypt_crypted(value: str) -> str | None:
-    """Decrypt a CRYPTED / ENCRYPTED:-prefixed StormKitty config value."""
     if value.startswith("ENCRYPTED:"):
         value = value[10:]
     elif value.startswith("CRYPTED"):
@@ -104,7 +79,7 @@ def _decrypt_crypted(value: str) -> str | None:
         return None
 
 
-# -- Regex patterns -----------------------------------------------------------
+# -- Regex patterns
 
 # Plain Telegram bot token in raw ASCII bytes
 _TG_TOKEN_ASCII = re.compile(
@@ -217,24 +192,10 @@ def is_stormkitty(data: bytes) -> bool:
 
 
 def extract_token(data: bytes) -> str | None:
-    """
-    Extract the C2 token from a StormKitty binary (original or Discord-variant fork).
-
-    Original StormKitty uses Telegram; some forks use Discord webhooks instead.
-    Returns:
-      - Discord webhook URL string (if Discord variant)
-      - Telegram token as "TOKEN$CHATID" or "TOKEN$" (if Telegram variant)
-
-    Tries in order:
-      1. Plain ASCII regex scan (Telegram token + Discord webhook)
-      2. #US heap entries — CRYPTED (AES decrypt) and plain string scan
-      3. Plain UTF-16LE regex scan for both formats
-      4. CRYPTED values via UTF-16LE byte pattern in raw data
-    """
     token = None
     chat_id = None
 
-    # -- Pass 1: plain ASCII ---------------------------------------------------
+    # -- Pass 1: plain ASCII 
     m = _WEBHOOK_ASCII.search(data)
     if m:
         return m.group(0).decode("ascii")
@@ -243,7 +204,7 @@ def extract_token(data: bytes) -> str | None:
     if m:
         token = m.group(0).decode("ascii")
 
-    # -- Pass 2: #US heap — CRYPTED and plain strings -------------------------
+    # -- Pass 2: #US heap — CRYPTED and plain strings 
     entries = _parse_us_heap(data)
     for entry in entries:
         if entry.startswith("CRYPTED") or entry.startswith("ENCRYPTED:"):
@@ -266,7 +227,7 @@ def extract_token(data: bytes) -> str | None:
             if entry.lstrip("-").isdigit() and 6 <= len(entry.strip()) <= 14 and not chat_id:
                 chat_id = entry.strip()
 
-    # -- Pass 3: UTF-16LE regex on raw bytes -----------------------------------
+    # -- Pass 3: UTF-16LE regex on raw bytes 
     if not token:
         m = _WEBHOOK_UTF16.search(data)
         if m:
@@ -276,7 +237,7 @@ def extract_token(data: bytes) -> str | None:
         if m:
             token = _decode_utf16_str(m.group(0))
 
-    # -- Pass 4: CRYPTED in raw UTF-16LE bytes ---------------------------------
+    # -- Pass 4: CRYPTED in raw UTF-16LE bytes 
     if not token:
         for m in _CRYPTED_UTF16.finditer(data):
             raw = m.group(0)
