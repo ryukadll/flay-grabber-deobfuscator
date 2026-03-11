@@ -7,7 +7,6 @@ Pulsar is a widely-used feature-extended fork of Quasar.
 Both share a common codebase and leave distinctive fingerprints in the .NET
 binary — ASCII strings in the #Strings metadata heap and UTF-16LE strings in
 the #US (user-string) heap.
-
 """
 
 
@@ -86,5 +85,6 @@ def is_quasar(data: bytes) -> bool:
     for fp in _FINGERPRINTS_UTF16:
         if fp in data:
             score += 1
+
 
     return score >= 3
