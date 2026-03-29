@@ -11,7 +11,7 @@ A static analysis tool for identifying and extracting C2 configuration from comm
      ╚═╝     ╚══════╝╚═╝  ╚═╝   ╚═╝
                  grabber deobfuscator
 ```
-
+ 
 ---
 
 ## Features
