@@ -3,7 +3,7 @@
 A static analysis tool for identifying and extracting C2 configuration from common grabbers and RATs. Point it at a suspicious binary and it will identify the malware family, extract webhooks or bot tokens where possible, and validate them live.
 
 ```
-     ███████╗██╗      █████╗ ██╗   ██╗
+     ███████╗██╗      █████╗ ██╗   ██╗ 
      ██╔════╝██║     ██╔══██╗╚██╗ ██╔╝
      █████╗  ██║     ███████║ ╚████╔╝ 
      ██╔══╝  ██║     ██╔══██║  ╚██╔╝
